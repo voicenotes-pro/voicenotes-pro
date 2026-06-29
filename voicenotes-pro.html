@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VoiceNotes Pro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --navy: #0d1b2a;
+    --navy-2: #162032;
+    --navy-3: #1e2d40;
+    --slate: #2c3e52;
+    --teal: #00c4b4;
+    --teal-dim: #00a396;
+    --teal-glow: rgba(0,196,180,0.15);
+    --amber: #f59e0b;
+    --rose: #f43f5e;
+    --green: #10b981;
+    --text-primary: #e8edf2;
+    --text-secondary: #8fa3b8;
+    --text-muted: #546a7d;
+    --border: rgba(255,255,255,0.07);
+    --card: rgba(22,32,50,0.9);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--navy-2);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 34px; height: 34px; background: var(--teal);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
+  .logo-text span { color: var(--teal); }
+  .kylie-badge {
+    font-size: 12px; color: var(--amber); font-weight: 500;
+    background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.3);
+    padding: 5px 12px; border-radius: 20px; letter-spacing: .3px;
+  }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  #driveStatus {
+    font-size: 12px; padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--border); color: var(--text-secondary);
+    background: var(--navy-3); cursor: pointer; transition: all .2s;
+    font-weight: 500;
+  }
+  #driveStatus.connected { color: var(--green); border-color: rgba(16,185,129,.4); background: rgba(16,185,129,.08); }
+
+  /* ── Layout ── */
+  .app { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100vh - 65px); }
+
+  /* ── Left Panel ── */
+  .left-panel {
+    background: var(--navy-2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 24px;
+  }
+
+  /* ── Record Button Area ── */
+  .record-zone {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    padding: 28px 0 24px;
+  }
+  .waveform-ring {
+    position: relative; width: 120px; height: 120px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .waveform-ring canvas { position: absolute; top: 0; left: 0; }
+  #recordBtn {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--teal); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; transition: all .2s; z-index: 1; position: relative;
+    box-shadow: 0 0 0 0 var(--teal-glow);
+  }
+  #recordBtn:hover { transform: scale(1.05); background: var(--teal-dim); }
+  #recordBtn.recording {
+    background: var(--rose);
+    animation: pulse-ring 1.5s ease infinite;
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(244,63,94,.4); }
+    70% { box-shadow: 0 0 0 18px rgba(244,63,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(244,63,94,0); }
+  }
+  #recordStatus {
+    font-size: 13px; color: var(--text-secondary); font-weight: 500; letter-spacing: .5px;
+  }
+  #recordTimer { font-family: 'JetBrains Mono', monospace; font-size: 20px; color: var(--teal); font-weight: 500; }
+
+  /* ── Config Panel ── */
+  .config-section { margin-top: 4px; }
+  .section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;
+  }
+  .config-grid { display: flex; flex-direction: column; gap: 8px; }
+  .config-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px; background: var(--navy-3); border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .config-item label { font-size: 12px; color: var(--text-secondary); cursor: pointer; user-select: none; }
+  .toggle {
+    width: 34px; height: 18px; background: var(--slate); border-radius: 9px;
+    position: relative; cursor: pointer; transition: background .2s; border: none; outline: none;
+  }
+  .toggle.on { background: var(--teal); }
+  .toggle::after {
+    content: ''; position: absolute; width: 14px; height: 14px;
+    background: white; border-radius: 50%; top: 2px; left: 2px; transition: left .2s;
+  }
+  .toggle.on::after { left: 18px; }
+
+  .vocab-input {
+    margin-top: 8px;
+    width: 100%; padding: 8px 10px;
+    background: var(--navy-3); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text-primary); font-size: 12px;
+    font-family: 'JetBrains Mono', monospace; resize: vertical; min-height: 60px;
+    outline: none;
+  }
+  .vocab-input:focus { border-color: var(--teal); }
+  .vocab-input::placeholder { color: var(--text-muted); }
+
+  .meeting-type-select {
+    width: 100%; margin-top: 8px; padding: 8px 10px;
+    background: var(--navy-3); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text-primary); font-size: 12px;
+    outline: none; cursor: pointer;
+  }
+  .meeting-type-select:focus { border-color: var(--teal); }
+
+  /* ── Recordings List ── */
+  .recordings-list { margin-top: 20px; flex: 1; overflow-y: auto; }
+  .recording-item {
+    padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
+    margin-bottom: 6px; cursor: pointer; transition: all .15s;
+    background: var(--navy-3);
+  }
+  .recording-item:hover { border-color: var(--teal); background: var(--teal-glow); }
+  .recording-item.active { border-color: var(--teal); background: var(--teal-glow); }
+  .rec-title { font-size: 13px; font-weight: 600; }
+  .rec-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .rec-tag {
+    display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px;
+    font-weight: 600; letter-spacing: .3px; margin-top: 4px;
+  }
+
+  /* ── Right Panel ── */
+  .right-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+  .tabs {
+    display: flex; gap: 0; border-bottom: 1px solid var(--border);
+    background: var(--navy-2); padding: 0 24px;
+  }
+  .tab {
+    padding: 14px 18px; font-size: 13px; font-weight: 500;
+    color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .15s; user-select: none;
+  }
+  .tab:hover { color: var(--text-secondary); }
+  .tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+  .panel-content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* ── Transcript ── */
+  #transcriptBox {
+    background: var(--navy-2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; min-height: 280px; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.8; color: var(--text-primary);
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .speaker-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .8px; padding: 2px 7px;
+    border-radius: 4px; margin-right: 6px; display: inline-block;
+  }
+  .sp-a { background: rgba(0,196,180,.2); color: var(--teal); }
+  .sp-b { background: rgba(245,158,11,.2); color: var(--amber); }
+  .sp-c { background: rgba(244,63,94,.2); color: var(--rose); }
+  .confidence-low { text-decoration: underline wavy rgba(244,63,94,.6); }
+  .sentiment-pos { border-left: 3px solid var(--green); padding-left: 8px; }
+  .sentiment-neg { border-left: 3px solid var(--rose); padding-left: 8px; }
+  .interim { color: var(--text-muted); font-style: italic; }
+
+  .transcript-controls {
+    display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center;
+  }
+  .btn {
+    padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: none; transition: all .15s; letter-spacing: .3px;
+  }
+  .btn-teal { background: var(--teal); color: var(--navy); }
+  .btn-teal:hover { background: var(--teal-dim); }
+  .btn-outline {
+    background: transparent; color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+  .btn-amber { background: var(--amber); color: var(--navy); }
+  .btn-amber:hover { background: #d97706; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Summary ── */
+  .summary-card {
+    background: var(--navy-2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; margin-bottom: 16px;
+  }
+  .summary-card h3 {
+    font-size: 13px; font-weight: 700; color: var(--teal);
+    letter-spacing: .5px; margin-bottom: 12px; text-transform: uppercase;
+  }
+  .summary-card p, .summary-card li {
+    font-size: 13px; line-height: 1.7; color: var(--text-secondary);
+  }
+  .summary-card ul { padding-left: 18px; }
+  .summary-card li { margin-bottom: 4px; }
+
+  /* ── Action Items ── */
+  .action-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 14px; background: var(--navy-2); border-radius: 10px;
+    border: 1px solid var(--border); margin-bottom: 8px; transition: all .15s;
+  }
+  .action-item:hover { border-color: rgba(0,196,180,.3); }
+  .action-check {
+    width: 18px; height: 18px; border-radius: 5px;
+    border: 2px solid var(--teal); cursor: pointer; flex-shrink: 0;
+    margin-top: 1px; display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .action-check.checked { background: var(--teal); }
+  .action-check.checked::after { content: '✓'; font-size: 11px; color: var(--navy); font-weight: 800; }
+  .action-text { flex: 1; font-size: 13px; line-height: 1.5; }
+  .action-text.done { text-decoration: line-through; color: var(--text-muted); }
+  .action-deadline {
+    font-size: 11px; color: var(--amber); font-weight: 600;
+    background: rgba(245,158,11,.1); padding: 2px 8px; border-radius: 4px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+
+  /* ── Drive Export ── */
+  .drive-section { padding: 24px; }
+  .drive-card {
+    background: var(--navy-2); border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+  }
+  .drive-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .drive-card p { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+  .export-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .export-opt {
+    padding: 14px; border-radius: 10px; border: 1px solid var(--border);
+    cursor: pointer; transition: all .15s; text-align: center;
+  }
+  .export-opt:hover { border-color: var(--teal); background: var(--teal-glow); }
+  .export-opt.selected { border-color: var(--teal); background: var(--teal-glow); }
+  .export-opt .icon { font-size: 22px; margin-bottom: 6px; }
+  .export-opt .label { font-size: 12px; font-weight: 600; }
+  .export-opt .desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .folder-picker {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  }
+  #folderPath {
+    flex: 1; padding: 9px 12px; background: var(--navy-3);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text-secondary); font-size: 13px; outline: none;
+  }
+  #folderPath:focus { border-color: var(--teal); color: var(--text-primary); }
+
+  /* ── Stats ── */
+  .stats-row { display: flex; gap: 12px; margin-bottom: 16px; }
+  .stat-card {
+    flex: 1; padding: 14px; background: var(--navy-2); border: 1px solid var(--border);
+    border-radius: 10px; text-align: center;
+  }
+  .stat-val { font-size: 22px; font-weight: 700; color: var(--teal); font-family: 'JetBrains Mono', monospace; }
+  .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999;
+    padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    transform: translateY(60px); opacity: 0; transition: all .3s; pointer-events: none;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { background: var(--green); color: white; }
+  #toast.error { background: var(--rose); color: white; }
+  #toast.info { background: var(--teal); color: var(--navy); }
+
+  /* ── Empty State ── */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 300px; color: var(--text-muted); gap: 10px;
+  }
+  .empty-state .icon { font-size: 40px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── Loader ── */
+  .ai-loader {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 20px; background: var(--teal-glow); border-radius: 10px;
+    border: 1px solid rgba(0,196,180,.2); font-size: 13px; color: var(--teal);
+  }
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(0,196,180,.3);
+    border-top-color: var(--teal); border-radius: 50%; animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Drive Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--navy-2); border: 1px solid var(--border); border-radius: 16px;
+    padding: 28px; width: 480px; max-width: 95vw;
+  }
+  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+  .modal input {
+    width: 100%; padding: 10px 12px; background: var(--navy-3);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text-primary); font-size: 13px; outline: none; margin-bottom: 12px;
+  }
+  .modal input:focus { border-color: var(--teal); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--slate); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; }
+    .left-panel { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🎙</div>
+    <div class="logo-text">Voice<span>Notes</span> Pro</div>
+  </div>
+  <div class="kylie-badge">💛 Happy Father's Day — Love, Kylie</div>
+  <div class="header-right">
+    <button id="driveStatus" onclick="openDriveModal()">🔗 Connect Google Drive</button>
+  </div>
+</header>
+
+<!-- App Layout -->
+<div class="app">
+
+  <!-- ── LEFT PANEL ── -->
+  <div class="left-panel">
+
+    <!-- Record Zone -->
+    <div class="record-zone">
+      <div class="waveform-ring">
+        <canvas id="waveCanvas" width="120" height="120"></canvas>
+        <button id="recordBtn" onclick="toggleRecording()" title="Start / Stop recording">🎙</button>
+      </div>
+      <div id="recordTimer">00:00</div>
+      <div id="recordStatus">TAP TO RECORD</div>
+    </div>
+
+    <!-- Config -->
+    <div class="config-section">
+      <div class="section-label">Recording Settings</div>
+      <div class="config-grid">
+        <div class="config-item">
+          <label for="tog-speaker">Speaker ID</label>
+          <button class="toggle on" id="tog-speaker" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="config-item">
+          <label for="tog-sentiment">Sentiment Tagging</label>
+          <button class="toggle on" id="tog-sentiment" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="config-item">
+          <label for="tog-autocat">Auto-Categorize</label>
+          <button class="toggle on" id="tog-autocat" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="config-item">
+          <label for="tog-deadline">Deadline Extraction</label>
+          <button class="toggle on" id="tog-deadline" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="config-item">
+          <label for="tog-confidence">Flag Uncertain Words</label>
+          <button class="toggle on" id="tog-confidence" onclick="this.classList.toggle('on')"></button>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:16px;">Custom Vocabulary</div>
+      <textarea class="vocab-input" id="customVocab" placeholder="Add company terms, names, acronyms... (comma separated)&#10;e.g. KPI, Jira, Salesforce, Q3 OKR"></textarea>
+
+      <div class="section-label" style="margin-top:12px;">Meeting Type</div>
+      <select class="meeting-type-select" id="meetingType">
+        <option value="auto">🤖 Auto-detect</option>
+        <option value="meeting">📋 Team Meeting</option>
+        <option value="brainstorm">💡 Brainstorm</option>
+        <option value="client">🤝 Client Call</option>
+        <option value="interview">👤 Interview</option>
+        <option value="personal">📝 Personal Note</option>
+      </select>
+    </div>
+
+    <!-- Past Recordings -->
+    <div class="recordings-list">
+      <div class="section-label" style="margin-top:16px;">Recordings</div>
+      <div id="recordingsList"></div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL ── -->
+  <div class="right-panel">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('transcript', this)">📝 Transcript</div>
+      <div class="tab" onclick="switchTab('summary', this)">✨ AI Summary</div>
+      <div class="tab" onclick="switchTab('actions', this)">✅ Action Items</div>
+      <div class="tab" onclick="switchTab('drive', this)">☁️ Export to Drive</div>
+    </div>
+
+    <!-- Transcript Tab -->
+    <div id="tab-transcript" class="panel-content">
+      <div class="stats-row" id="statsRow" style="display:none">
+        <div class="stat-card"><div class="stat-val" id="statWords">0</div><div class="stat-lbl">Words</div></div>
+        <div class="stat-card"><div class="stat-val" id="statDuration">0:00</div><div class="stat-lbl">Duration</div></div>
+        <div class="stat-card"><div class="stat-val" id="statSpeakers">1</div><div class="stat-lbl">Speakers</div></div>
+        <div class="stat-card"><div class="stat-val" id="statSentiment">—</div><div class="stat-lbl">Sentiment</div></div>
+      </div>
+      <div class="transcript-controls">
+        <button class="btn btn-teal" onclick="analyzeWithAI()" id="btnAnalyze" disabled>✨ Analyze with AI</button>
+        <button class="btn btn-outline" onclick="copyTranscript()">📋 Copy</button>
+        <button class="btn btn-outline" onclick="clearAll()">🗑 Clear</button>
+        <span id="liveTag" style="font-size:11px;color:var(--rose);font-weight:700;display:none;">● LIVE</span>
+      </div>
+      <div id="transcriptBox">
+        <div class="empty-state">
+          <div class="icon">🎙</div>
+          <p>Press record to start capturing speech</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Tab -->
+    <div id="tab-summary" class="panel-content" style="display:none">
+      <div id="summaryContent">
+        <div class="empty-state">
+          <div class="icon">✨</div>
+          <p>Record audio and click "Analyze with AI" to generate a summary</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Items Tab -->
+    <div id="tab-actions" class="panel-content" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:600;">Action Items</div>
+        <button class="btn btn-outline" onclick="addManualAction()">+ Add Manually</button>
+      </div>
+      <div id="actionsList">
+        <div class="empty-state">
+          <div class="icon">✅</div>
+          <p>Action items extracted from your recordings will appear here</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drive Tab -->
+    <div id="tab-drive" class="drive-section" style="display:none">
+      <div class="drive-card">
+        <h3>☁️ Export to Google Drive</h3>
+        <p>Choose what to export, pick your Drive folder, and send your notes directly to your workspace.</p>
+
+        <div class="section-label">Export Format</div>
+        <div class="export-options">
+          <div class="export-opt selected" id="opt-doc" onclick="selectExport('doc')">
+            <div class="icon">📄</div>
+            <div class="label">Google Doc</div>
+            <div class="desc">Full transcript + summary</div>
+          </div>
+          <div class="export-opt" id="opt-summary" onclick="selectExport('summary')">
+            <div class="icon">📋</div>
+            <div class="label">Summary Only</div>
+            <div class="desc">Key points + actions</div>
+          </div>
+          <div class="export-opt" id="opt-actions" onclick="selectExport('actions')">
+            <div class="icon">✅</div>
+            <div class="label">Action Items</div>
+            <div class="desc">Checklist format</div>
+          </div>
+          <div class="export-opt" id="opt-full" onclick="selectExport('full')">
+            <div class="icon">📦</div>
+            <div class="label">Full Package</div>
+            <div class="desc">All of the above</div>
+          </div>
+        </div>
+
+        <div class="section-label">Destination Folder</div>
+        <div class="folder-picker">
+          <input id="folderPath" placeholder="e.g. My Drive / Work / Meeting Notes" />
+          <button class="btn btn-outline" onclick="openDriveModal()">📁 Browse</button>
+        </div>
+
+        <div class="section-label">File Name</div>
+        <input id="exportFileName" style="width:100%;padding:9px 12px;background:var(--navy-3);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;outline:none;margin-bottom:16px;" placeholder="e.g. Team Meeting 2026-06-29" />
+
+        <button class="btn btn-teal" style="width:100%;padding:12px;" onclick="exportToDrive()" id="btnExport">
+          ☁️ Save to Google Drive
+        </button>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:10px;text-align:center;">
+          You'll need to authorize Google Drive access. Your files are sent directly to your Drive.
+        </p>
+
+        <div id="exportHistory" style="margin-top:20px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Google Drive Modal -->
+<div class="modal-overlay" id="driveModal">
+  <div class="modal">
+    <h2>Connect Google Drive</h2>
+    <p>Enter your Google Drive API key and OAuth token to enable direct saving. Your credentials are stored only in this session and never sent to any third party.</p>
+    <input id="driveApiKey" placeholder="Google API Key" type="password" />
+    <input id="driveToken" placeholder="OAuth 2.0 Access Token" type="password" />
+    <input id="driveFolderInput" placeholder="Folder path (e.g. Work/Meeting Notes)" />
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeDriveModal()">Cancel</button>
+      <button class="btn btn-teal" onclick="connectDrive()">Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let isRecording = false;
+let recognition = null;
+let mediaStream = null;
+let audioContext = null;
+let analyser = null;
+let timerInterval = null;
+let seconds = 0;
+let finalTranscript = '';
+let interimText = '';
+let recordings = [];
+let currentRecording = null;
+let aiAnalysis = null;
+let actionItems = [];
+let speakerCount = 1;
+let lastSpeechTime = 0;
+let selectedExportFormat = 'doc';
+let driveConnected = false;
+let driveConfig = {};
+let exportHistory = [];
+let animFrame = null;
+
+// ─────────────────────────────────────────────
+//  WAVEFORM CANVAS
+// ─────────────────────────────────────────────
+const waveCanvas = document.getElementById('waveCanvas');
+const waveCtx = waveCanvas.getContext('2d');
+
+function drawIdleWave() {
+  waveCtx.clearRect(0, 0, 120, 120);
+  const cx = 60, cy = 60, r = 52;
+  waveCtx.beginPath();
+  waveCtx.arc(cx, cy, r, 0, Math.PI * 2);
+  waveCtx.strokeStyle = 'rgba(0,196,180,0.15)';
+  waveCtx.lineWidth = 1.5;
+  waveCtx.stroke();
+}
+
+function drawLiveWave(dataArray) {
+  waveCtx.clearRect(0, 0, 120, 120);
+  const cx = 60, cy = 60, r = 48;
+  const slices = dataArray.length;
+  waveCtx.beginPath();
+  for (let i = 0; i < slices; i++) {
+    const angle = (i / slices) * Math.PI * 2 - Math.PI / 2;
+    const amp = (dataArray[i] / 255) * 18;
+    const rx = cx + (r + amp) * Math.cos(angle);
+    const ry = cy + (r + amp) * Math.sin(angle);
+    i === 0 ? waveCtx.moveTo(rx, ry) : waveCtx.lineTo(rx, ry);
+  }
+  waveCtx.closePath();
+  waveCtx.strokeStyle = '#f43f5e';
+  waveCtx.lineWidth = 2;
+  waveCtx.stroke();
+  animFrame = requestAnimationFrame(() => {
+    if (analyser) {
+      const buf = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(buf);
+      drawLiveWave(buf);
+    }
+  });
+}
+
+drawIdleWave();
+
+// ─────────────────────────────────────────────
+//  TIMER
+// ─────────────────────────────────────────────
+function updateTimer() {
+  seconds++;
+  const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const s = String(seconds % 60).padStart(2, '0');
+  document.getElementById('recordTimer').textContent = `${m}:${s}`;
+}
+
+// ─────────────────────────────────────────────
+//  RECORDING
+// ─────────────────────────────────────────────
+async function toggleRecording() {
+  if (isRecording) stopRecording();
+  else await startRecording();
+}
+
+async function startRecording() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Speech recognition not supported in this browser. Use Chrome.', 'error');
+    return;
+  }
+
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioContext = new AudioContext();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 64;
+    audioContext.createMediaStreamSource(mediaStream).connect(analyser);
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(buf);
+    drawLiveWave(buf);
+  } catch (e) {
+    // waveform optional
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = (e) => {
+    interimText = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const transcript = e.results[i][0].transcript;
+      const conf = e.results[i][0].confidence;
+      if (e.results[i].isFinal) {
+        const now = Date.now();
+        const pause = now - lastSpeechTime;
+        lastSpeechTime = now;
+
+        // Speaker detection heuristic: long pause → new speaker
+        const speakerToggle = document.getElementById('tog-speaker').classList.contains('on');
+        if (speakerToggle && pause > 3000 && finalTranscript.length > 0) {
+          speakerCount = speakerCount < 3 ? speakerCount + 1 : 1;
+          finalTranscript += `\n`;
+        }
+
+        const flagConf = document.getElementById('tog-confidence').classList.contains('on');
+        const word = (flagConf && conf < 0.7) ? `<span class="confidence-low" title="Low confidence">${transcript}</span>` : transcript;
+
+        if (speakerToggle) {
+          const labels = ['A', 'B', 'C'];
+          const classes = ['sp-a', 'sp-b', 'sp-c'];
+          const idx = (speakerCount - 1) % 3;
+          finalTranscript += `<span class="speaker-label ${classes[idx]}">SPK ${labels[idx]}</span>${word} `;
+        } else {
+          finalTranscript += word + ' ';
+        }
+      } else {
+        interimText += transcript;
+      }
+    }
+    renderTranscript();
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error !== 'aborted') showToast('Mic error: ' + e.error, 'error');
+  };
+
+  recognition.onend = () => {
+    if (isRecording) recognition.start(); // restart on end if still recording
+  };
+
+  recognition.start();
+  lastSpeechTime = Date.now();
+  isRecording = true;
+  seconds = 0;
+  timerInterval = setInterval(updateTimer, 1000);
+
+  const btn = document.getElementById('recordBtn');
+  btn.classList.add('recording');
+  btn.textContent = '⏹';
+  document.getElementById('recordStatus').textContent = 'RECORDING...';
+  document.getElementById('liveTag').style.display = 'inline';
+  document.getElementById('btnAnalyze').disabled = false;
+  document.getElementById('statsRow').style.display = 'flex';
+}
+
+function stopRecording() {
+  if (recognition) { recognition.onend = null; recognition.stop(); }
+  if (timerInterval) clearInterval(timerInterval);
+  if (animFrame) cancelAnimationFrame(animFrame);
+  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+  if (audioContext) audioContext.close();
+  drawIdleWave();
+
+  isRecording = false;
+  const btn = document.getElementById('recordBtn');
+  btn.classList.remove('recording');
+  btn.textContent = '🎙';
+  document.getElementById('recordStatus').textContent = 'TAP TO RECORD';
+  document.getElementById('liveTag').style.display = 'none';
+
+  if (finalTranscript.trim()) {
+    saveRecording();
+    updateStats();
+  }
+}
+
+function renderTranscript() {
+  const box = document.getElementById('transcriptBox');
+  if (!finalTranscript && !interimText) return;
+  const sentToggle = document.getElementById('tog-sentiment').classList.contains('on');
+  let html = finalTranscript;
+  if (interimText) html += `<span class="interim">${interimText}</span>`;
+  if (sentToggle) html = applySentimentHighlight(html);
+  box.innerHTML = html;
+  box.scrollTop = box.scrollHeight;
+  updateStats();
+}
+
+function applySentimentHighlight(html) {
+  const posWords = /\b(great|excellent|approve|agree|yes|perfect|love|amazing|good|success|solved|done|happy|benefit|advantage|win)\b/gi;
+  const negWords = /\b(issue|problem|concern|disagree|no|fail|bad|delay|risk|blocker|stuck|slow|broken|worried)\b/gi;
+  // apply to text nodes only – simple approach
+  return html.replace(posWords, '<span style="color:#10b981;font-weight:600">$&</span>')
+             .replace(negWords, '<span style="color:#f43f5e;font-weight:600">$&</span>');
+}
+
+function updateStats() {
+  const plain = document.getElementById('transcriptBox').innerText || '';
+  const words = plain.trim().split(/\s+/).filter(Boolean).length;
+  document.getElementById('statWords').textContent = words;
+  const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const s = String(seconds % 60).padStart(2, '0');
+  document.getElementById('statDuration').textContent = `${m}:${s}`;
+  document.getElementById('statSpeakers').textContent = speakerCount;
+}
+
+// ─────────────────────────────────────────────
+//  SAVE RECORDING
+// ─────────────────────────────────────────────
+function saveRecording() {
+  const meetingType = document.getElementById('meetingType').value;
+  const now = new Date();
+  const label = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const typeLabels = { auto: '🤖 Auto', meeting: '📋 Meeting', brainstorm: '💡 Brainstorm', client: '🤝 Client', interview: '👤 Interview', personal: '📝 Note' };
+  const typeColors = { auto: '#546a7d', meeting: '#00c4b4', brainstorm: '#f59e0b', client: '#10b981', interview: '#a78bfa', personal: '#8fa3b8' };
+
+  currentRecording = {
+    id: Date.now(),
+    label,
+    type: meetingType,
+    typeLabel: typeLabels[meetingType],
+    typeColor: typeColors[meetingType],
+    transcript: document.getElementById('transcriptBox').innerHTML,
+    plainText: document.getElementById('transcriptBox').innerText,
+    duration: seconds,
+    speakers: speakerCount,
+    timestamp: now.toISOString(),
+    aiAnalysis: null,
+    actions: []
+  };
+
+  recordings.unshift(currentRecording);
+  renderRecordingsList();
+
+  // Set default file name for export
+  document.getElementById('exportFileName').value = `${typeLabels[meetingType]} – ${label}`;
+}
+
+function renderRecordingsList() {
+  const el = document.getElementById('recordingsList');
+  if (!recordings.length) { el.innerHTML = ''; return; }
+  el.innerHTML = recordings.map(r => `
+    <div class="recording-item ${r.id === (currentRecording?.id) ? 'active' : ''}" onclick="loadRecording(${r.id})">
+      <div class="rec-title">${r.label}</div>
+      <div class="rec-meta">${Math.floor(r.duration / 60)}m ${r.duration % 60}s · ${r.speakers} speaker${r.speakers > 1 ? 's' : ''}</div>
+      <span class="rec-tag" style="background:${r.typeColor}22;color:${r.typeColor}">${r.typeLabel}</span>
+    </div>
+  `).join('');
+}
+
+function loadRecording(id) {
+  const rec = recordings.find(r => r.id === id);
+  if (!rec) return;
+  currentRecording = rec;
+  finalTranscript = rec.transcript;
+  speakerCount = rec.speakers;
+  seconds = rec.duration;
+  document.getElementById('transcriptBox').innerHTML = rec.transcript;
+  document.getElementById('statsRow').style.display = 'flex';
+  updateStats();
+  renderRecordingsList();
+  if (rec.aiAnalysis) {
+    aiAnalysis = rec.aiAnalysis;
+    renderSummary(rec.aiAnalysis);
+  }
+  if (rec.actions?.length) {
+    actionItems = rec.actions;
+    renderActions();
+  }
+  switchTab('transcript', document.querySelector('.tab'));
+  document.getElementById('btnAnalyze').disabled = false;
+}
+
+// ─────────────────────────────────────────────
+//  AI ANALYSIS
+// ─────────────────────────────────────────────
+async function analyzeWithAI() {
+  const plainText = document.getElementById('transcriptBox').innerText?.trim();
+  if (!plainText || plainText.length < 10) {
+    showToast('Nothing to analyze yet. Record some audio first.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btnAnalyze');
+  btn.disabled = true;
+  btn.textContent = '⏳ Analyzing...';
+
+  const summaryTab = document.getElementById('tab-summary');
+  const actionsTab = document.getElementById('tab-actions');
+  summaryTab.innerHTML = `<div class="ai-loader"><div class="spinner"></div> Claude is analyzing your transcript…</div>`;
+  actionsTab.innerHTML = `<div class="ai-loader"><div class="spinner"></div> Extracting action items…</div>`;
+
+  const vocab = document.getElementById('customVocab').value;
+  const meetingType = document.getElementById('meetingType').value;
+  const wantDeadlines = document.getElementById('tog-deadline').classList.contains('on');
+  const wantSentiment = document.getElementById('tog-sentiment').classList.contains('on');
+  const wantAutocat = document.getElementById('tog-autocat').classList.contains('on');
+
+  const systemPrompt = `You are a professional meeting assistant. Analyze the provided transcript and return ONLY valid JSON (no markdown, no backticks, no extra text).
+
+Return this exact JSON shape:
+{
+  "summary": "A concise 3-5 sentence summary of the conversation.",
+  "key_points": ["point 1", "point 2", "point 3"],
+  "decisions": ["decision 1"],
+  "action_items": [
+    { "task": "task description", "deadline": "mentioned deadline or null", "owner": "mentioned person or null" }
+  ],
+  "category": "meeting|brainstorm|client|interview|personal",
+  "overall_sentiment": "positive|neutral|negative",
+  "topics": ["topic1", "topic2"]
+}
+
+Rules:
+- ONLY include information that is explicitly present in the transcript. Do not invent or infer details not spoken.
+- If something is not mentioned, use null or an empty array.
+- For deadlines, only extract dates/times actually spoken in the transcript.`;
+
+  const userMsg = `Transcript:
+"""
+${plainText}
+"""
+
+${vocab ? `Company vocabulary/context: ${vocab}` : ''}
+Meeting type hint: ${meetingType}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = data.content?.map(b => b.text || '').join('').trim();
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    aiAnalysis = parsed;
+    if (currentRecording) {
+      currentRecording.aiAnalysis = parsed;
+      actionItems = parsed.action_items || [];
+      currentRecording.actions = actionItems;
+    }
+
+    renderSummary(parsed);
+    renderActions();
+    document.getElementById('statSentiment').textContent = parsed.overall_sentiment === 'positive' ? '😊' : parsed.overall_sentiment === 'negative' ? '😟' : '😐';
+    showToast('Analysis complete!', 'success');
+    switchTab('summary', document.querySelectorAll('.tab')[1]);
+
+  } catch (err) {
+    summaryTab.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Analysis failed. Check your connection and try again.</p></div>`;
+    actionsTab.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Could not extract actions.</p></div>`;
+    showToast('AI analysis failed.', 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✨ Analyze with AI';
+}
+
+function renderSummary(d) {
+  const el = document.getElementById('tab-summary');
+  el.innerHTML = `
+    <div class="summary-card">
+      <h3>📋 Summary</h3>
+      <p>${d.summary || 'No summary available.'}</p>
+    </div>
+    ${d.key_points?.length ? `
+    <div class="summary-card">
+      <h3>🔑 Key Points</h3>
+      <ul>${d.key_points.map(p => `<li>${p}</li>`).join('')}</ul>
+    </div>` : ''}
+    ${d.decisions?.length ? `
+    <div class="summary-card">
+      <h3>🏁 Decisions Made</h3>
+      <ul>${d.decisions.map(p => `<li>${p}</li>`).join('')}</ul>
+    </div>` : ''}
+    ${d.topics?.length ? `
+    <div class="summary-card">
+      <h3>🏷 Topics</h3>
+      <p>${d.topics.map(t => `<span style="display:inline-block;background:var(--navy-3);border:1px solid var(--border);padding:3px 10px;border-radius:6px;font-size:12px;margin:3px">${t}</span>`).join('')}</p>
+    </div>` : ''}
+    ${d.overall_sentiment ? `
+    <div class="summary-card">
+      <h3>💬 Sentiment</h3>
+      <p style="color:${d.overall_sentiment === 'positive' ? 'var(--green)' : d.overall_sentiment === 'negative' ? 'var(--rose)' : 'var(--text-secondary)'}">
+        ${d.overall_sentiment === 'positive' ? '😊 Positive' : d.overall_sentiment === 'negative' ? '😟 Negative' : '😐 Neutral'}
+      </p>
+    </div>` : ''}
+  `;
+}
+
+function renderActions() {
+  const el = document.getElementById('tab-actions');
+  if (!actionItems?.length) {
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:600;">Action Items</div>
+        <button class="btn btn-outline" onclick="addManualAction()">+ Add Manually</button>
+      </div>
+      <div class="empty-state"><div class="icon">✅</div><p>No action items found in this recording.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:14px;font-weight:600;">Action Items <span style="color:var(--teal)">(${actionItems.length})</span></div>
+      <button class="btn btn-outline" onclick="addManualAction()">+ Add Manually</button>
+    </div>
+    ${actionItems.map((item, i) => `
+      <div class="action-item" id="action-${i}">
+        <div class="action-check ${item.done ? 'checked' : ''}" onclick="toggleAction(${i})"></div>
+        <div class="action-text ${item.done ? 'done' : ''}">${item.task}${item.owner ? ` <span style="color:var(--teal);font-size:11px">@${item.owner}</span>` : ''}</div>
+        ${item.deadline ? `<div class="action-deadline">📅 ${item.deadline}</div>` : ''}
+      </div>
+    `).join('')}
+  `;
+}
+
+function toggleAction(i) {
+  actionItems[i].done = !actionItems[i].done;
+  renderActions();
+}
+
+function addManualAction() {
+  const task = prompt('Enter action item:');
+  if (task?.trim()) {
+    const deadline = prompt('Deadline (optional, press Enter to skip):');
+    actionItems.push({ task: task.trim(), deadline: deadline?.trim() || null, owner: null, done: false });
+    if (currentRecording) currentRecording.actions = actionItems;
+    renderActions();
+    showToast('Action item added.', 'success');
+  }
+}
+
+// ─────────────────────────────────────────────
+//  TABS
+// ─────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel-content, .drive-section').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.getAttribute('onclick')?.includes(name)) t.classList.add('active');
+  });
+  const target = document.getElementById(`tab-${name}`);
+  if (target) target.style.display = 'block';
+}
+
+// ─────────────────────────────────────────────
+//  EXPORT / DRIVE
+// ─────────────────────────────────────────────
+function selectExport(fmt) {
+  selectedExportFormat = fmt;
+  document.querySelectorAll('.export-opt').forEach(o => o.classList.remove('selected'));
+  document.getElementById(`opt-${fmt}`).classList.add('selected');
+}
+
+function buildExportContent() {
+  const plain = document.getElementById('transcriptBox').innerText || '';
+  const rec = currentRecording;
+  const now = new Date().toLocaleString();
+
+  let content = `VoiceNotes Pro Export\nGenerated: ${now}\n`;
+  if (rec) content += `Type: ${rec.typeLabel} | Duration: ${Math.floor(rec.duration/60)}m${rec.duration%60}s | Speakers: ${rec.speakers}\n`;
+  content += `\n${'─'.repeat(50)}\n`;
+
+  if (['doc', 'full'].includes(selectedExportFormat)) {
+    content += `\nTRANSCRIPT\n${'─'.repeat(30)}\n${plain}\n`;
+  }
+  if (['summary', 'doc', 'full'].includes(selectedExportFormat) && aiAnalysis) {
+    content += `\nSUMMARY\n${'─'.repeat(30)}\n${aiAnalysis.summary}\n`;
+    if (aiAnalysis.key_points?.length) content += `\nKEY POINTS\n${aiAnalysis.key_points.map(p => `• ${p}`).join('\n')}\n`;
+    if (aiAnalysis.decisions?.length) content += `\nDECISIONS\n${aiAnalysis.decisions.map(p => `• ${p}`).join('\n')}\n`;
+  }
+  if (['actions', 'full'].includes(selectedExportFormat) && actionItems.length) {
+    content += `\nACTION ITEMS\n${'─'.repeat(30)}\n`;
+    content += actionItems.map((a, i) => `${i + 1}. [${a.done ? 'x' : ' '}] ${a.task}${a.deadline ? ` (by ${a.deadline})` : ''}${a.owner ? ` — ${a.owner}` : ''}`).join('\n');
+    content += '\n';
+  }
+  return content;
+}
+
+async function exportToDrive() {
+  const plain = document.getElementById('transcriptBox').innerText?.trim();
+  if (!plain) { showToast('Nothing to export. Record first.', 'error'); return; }
+
+  const fileName = document.getElementById('exportFileName').value || 'VoiceNotes Export';
+  const folder = document.getElementById('folderPath').value || 'My Drive';
+  const content = buildExportContent();
+
+  if (!driveConnected) {
+    // Simulate export: download as .txt
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${fileName}.txt`; a.click();
+    URL.revokeObjectURL(url);
+    addExportRecord(fileName, folder, 'Downloaded (Drive not connected)');
+    showToast('Saved as file. Connect Drive to upload directly.', 'info');
+    return;
+  }
+
+  // Real Drive upload via API
+  const btn = document.getElementById('btnExport');
+  btn.disabled = true; btn.textContent = '⏳ Uploading...';
+
+  try {
+    const meta = JSON.stringify({ name: fileName + '.txt', parents: [] });
+    const body = new FormData();
+    body.append('metadata', new Blob([meta], { type: 'application/json' }));
+    body.append('file', new Blob([content], { type: 'text/plain' }));
+
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${driveConfig.token}` },
+      body
+    });
+
+    if (res.ok) {
+      addExportRecord(fileName, folder, 'Uploaded to Drive ✓');
+      showToast('Saved to Google Drive!', 'success');
+    } else {
+      throw new Error('Upload failed');
+    }
+  } catch {
+    showToast('Drive upload failed. Check credentials.', 'error');
+  }
+
+  btn.disabled = false; btn.textContent = '☁️ Save to Google Drive';
+}
+
+function addExportRecord(name, folder, status) {
+  exportHistory.unshift({ name, folder, status, time: new Date().toLocaleTimeString() });
+  const el = document.getElementById('exportHistory');
+  el.innerHTML = `
+    <div class="section-label">Export History</div>
+    ${exportHistory.slice(0, 5).map(h => `
+      <div style="padding:10px 12px;background:var(--navy-3);border-radius:8px;margin-bottom:6px;border:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:600">${h.name}</div>
+        <div style="font-size:11px;color:var(--text-muted)">📁 ${h.folder} · ${h.time}</div>
+        <div style="font-size:11px;color:var(--green);margin-top:2px">${h.status}</div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ─────────────────────────────────────────────
+//  DRIVE MODAL
+// ─────────────────────────────────────────────
+function openDriveModal() { document.getElementById('driveModal').classList.add('open'); }
+function closeDriveModal() { document.getElementById('driveModal').classList.remove('open'); }
+
+function connectDrive() {
+  const key = document.getElementById('driveApiKey').value.trim();
+  const token = document.getElementById('driveToken').value.trim();
+  const folder = document.getElementById('driveFolderInput').value.trim();
+  if (!token) { showToast('Access token is required.', 'error'); return; }
+  driveConfig = { key, token, folder };
+  driveConnected = true;
+  const btn = document.getElementById('driveStatus');
+  btn.textContent = '✅ Drive Connected';
+  btn.classList.add('connected');
+  if (folder) document.getElementById('folderPath').value = folder;
+  closeDriveModal();
+  showToast('Google Drive connected!', 'success');
+}
+
+// ─────────────────────────────────────────────
+//  UTILS
+// ─────────────────────────────────────────────
+function copyTranscript() {
+  const text = document.getElementById('transcriptBox').innerText;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!', 'success'));
+}
+
+function clearAll() {
+  if (!confirm('Clear this transcript?')) return;
+  finalTranscript = ''; interimText = ''; seconds = 0; speakerCount = 1; aiAnalysis = null; actionItems = [];
+  document.getElementById('transcriptBox').innerHTML = '<div class="empty-state"><div class="icon">🎙</div><p>Press record to start capturing speech</p></div>';
+  document.getElementById('tab-summary').innerHTML = '<div class="empty-state"><div class="icon">✨</div><p>Record audio and click "Analyze with AI" to generate a summary</p></div>';
+  document.getElementById('tab-actions').innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>Action items extracted from your recordings will appear here</p></div>';
+  document.getElementById('statsRow').style.display = 'none';
+  document.getElementById('btnAnalyze').disabled = true;
+  document.getElementById('statSentiment').textContent = '—';
+}
+
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `show ${type}`;
+  setTimeout(() => t.className = '', 3000);
+}
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+document.addEventListener('click', e => {
+  if (e.target === document.getElementById('driveModal')) closeDriveModal();
+});
+</script>
+</body>
+</html>
